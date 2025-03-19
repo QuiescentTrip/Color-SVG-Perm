@@ -48,51 +48,72 @@
 	}
 </script>
 
-<div class="p-4">
-	<h1 class="text-2xl font-bold mb-4">Color Combinations</h1>
+<div class="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen my-20">
+	<h1 class="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">Color Pattern Generator</h1>
 
-	<div class="mb-8 space-y-4">
-		<div class="flex flex-wrap gap-4 items-center">
-			{#each colors as color, i}
-				<div class="flex items-center gap-2">
-					<input type="color" bind:value={colors[i]} class="w-12 h-8 rounded cursor-pointer" />
-					<button
-						on:click={() => removeColor(i)}
-						class="text-red-500 hover:text-red-700"
-						title="Remove color"
-					>
-						×
-					</button>
-				</div>
-			{/each}
+	<div class="mb-12 space-y-6 bg-white p-6 rounded-lg shadow-sm">
+		<div>
+			<h2 class="text-lg font-semibold mb-4 text-gray-700">Selected Colors</h2>
+			<div class="flex flex-wrap gap-4 items-center">
+				{#each colors as color, i}
+					<div class="flex items-center gap-2 bg-gray-50 p-2 rounded-md">
+						<input
+							type="color"
+							bind:value={colors[i]}
+							class="w-14 h-10 rounded cursor-pointer border-2 border-gray-200"
+						/>
+						<button
+							on:click={() => removeColor(i)}
+							class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full transition-colors"
+							title="Remove color"
+						>
+							×
+						</button>
+					</div>
+				{/each}
+			</div>
 		</div>
 
-		<div class="flex gap-2">
-			<input type="color" bind:value={newColor} class="w-12 h-8 rounded cursor-pointer" />
+		<div class="flex gap-3 items-center border-t pt-4">
+			<input
+				type="color"
+				bind:value={newColor}
+				class="w-14 h-10 rounded cursor-pointer border-2 border-gray-200"
+			/>
 			<button
 				on:click={addColor}
-				class="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+				class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
 			>
-				Add Color
+				<span>Add New Color</span>
 			</button>
 		</div>
 	</div>
 
-	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 		{#each combinations as combo}
-			<div class="border rounded-lg p-4 shadow-md">
-				<div class="aspect-square">
-					<img src={getSvgUrl(combo)} alt="Color combination pattern" class="w-full h-full" />
+			<div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+				<div class="aspect-square rounded-lg overflow-hidden">
+					<img
+						src={getSvgUrl(combo)}
+						alt="Color combination pattern"
+						class="w-full h-full object-cover"
+					/>
 				</div>
-				<div class="flex gap-2 text-sm mt-2">
+				<div class="flex gap-3 mt-4 px-2">
 					{#each combo as color}
-						<div class="flex-1 text-center">{color}</div>
+					<div
+							class="flex-1 text-center py-2 px-3 bg-gray-50 rounded text-sm font-mono text-gray-600 flex items-center gap-2"
+						>
+							<div class="w-4 h-4 rounded-full" style="background-color: {color}"></div>
+							{color}
+						</div>
 					{/each}
 				</div>
 			</div>
 		{/each}
 	</div>
 </div>
+
 
 <style>
 	:global(object) :global(path:nth-child(1)) {
