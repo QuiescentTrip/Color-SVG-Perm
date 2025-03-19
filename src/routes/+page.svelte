@@ -6,6 +6,8 @@
 	let originalColors: string[] = [];
 	let isValidColorCount = true;
 	let uniqueColorCount = 0;
+	let showModal = false;
+	let selectedImageUrl: string | null = null;
 
 	function validateUpload(): boolean {
 		return expectedColorCount > 0 && expectedColorCount <= colors.length;
@@ -181,6 +183,11 @@
 
 		return `data:image/svg+xml,${encodeURIComponent(modifiedSvg)}`;
 	}
+
+	function openModal(imageUrl: string) {
+		selectedImageUrl = imageUrl;
+		showModal = true;
+	}
 </script>
 
 <div class="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen my-20">
@@ -283,11 +290,16 @@
 					{:else if combinations.length === 0}
 						<p class="text-gray-400">Loading...</p>
 					{:else}
-						<img
-							src={getSvgUrl(combo)}
-							alt="Color combination pattern"
-							class="w-full h-full object-cover"
-						/>
+						<button
+							class="w-full h-full"
+							on:click={() => openModal(getSvgUrl(combo))}
+						>
+							<img
+								src={getSvgUrl(combo)}
+								alt="Color combination pattern"
+								class="w-full h-full object-cover"
+							/>
+						</button>
 					{/if}
 				</div>
 				<div class="flex gap-3 mt-4 px-2 flex-wrap">
@@ -303,6 +315,17 @@
 	</div>
 </div>
 
+{#if showModal && selectedImageUrl}
+	<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={() => showModal = false}>
+		<div class="max-w-[90vw] max-h-[90vh]">
+			<img
+				src={selectedImageUrl}
+				alt="Full size pattern"
+				class="max-w-full max-h-[90vh] object-contain"
+			/>
+		</div>
+	</div>
+{/if}
 
 <style>
 	:global(object) :global(path:nth-child(1)) {
