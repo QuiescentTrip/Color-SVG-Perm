@@ -2,9 +2,14 @@
 	let colors = ['#E18D93', '#8F9F72', '#5A6E48', '#EDCC8A', '#ADC9CC'];
 	let newColor = '#000000';
 	let uploadedSvg: string | null = null;
-	let uniqueColorCount = 3; // Default number of unique colors in the SVG
-	let expectedColorCount = 4; // Default expected number of colors
-	let originalColors: string[] = []; // Store original colors before normalization
+	let expectedColorCount = 4;
+	let originalColors: string[] = [];
+	let isValidColorCount = true;
+	let uniqueColorCount = 0;
+
+	function validateUpload(): boolean {
+		return expectedColorCount > 0 && expectedColorCount <= colors.length;
+	}
 
 	function addColor() {
 		colors = [...colors, newColor];
@@ -17,8 +22,13 @@
 
 	async function handleFileUpload(event: Event) {
 		const target = event.target as HTMLInputElement;
+		if (!validateUpload()) {
+			alert(`Please set a valid number of expected colors (1-${colors.length})`);
+			target.value = ''; // Reset file input
+			return;
+		}
+
 		const file = target.files?.[0];
-		
 		if (file && file.type === 'image/svg+xml') {
 			const reader = new FileReader();
 			reader.onload = (e) => {
@@ -29,11 +39,10 @@
 				const matches = content.match(fillRegex);
 				
 				if (!matches) {
-					uniqueColorCount = 0;
+					originalColors = [];
 					return;
 				}
 
-				// Get all valid colors first
 				originalColors = matches
 					.map(match => match.match(/fill="([^"]*)"/)?.[1])
 					.filter(color => color && color !== 'none' && 
@@ -44,8 +53,6 @@
 				normalizeColors();
 			};
 			reader.readAsText(file);
-		} else {
-			console.log('No file selected or invalid file type');
 		}
 	}
 
@@ -121,12 +128,7 @@
 		uploadedSvg = modifiedSvg;
 	}
 
-	$: {
-		// Re-normalize colors when expectedColorCount changes
-		if (uploadedSvg && originalColors.length) {
-			normalizeColors();
-		}
-	}
+	$: isValidColorCount = expectedColorCount > 0 && expectedColorCount <= colors.length;
 
 	$: combinations = generateCombinations(colors, uniqueColorCount);
 
@@ -184,26 +186,54 @@
 <div class="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen my-20">
 	<h1 class="text-3xl font-bold mb-8 text-gray-800 border-b pb-4">SVG Color Pattern Generator</h1>
 
+	<div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+		<h2 class="text-lg font-semibold mb-2 text-blue-800">📝 Quick Tutorial</h2>
+		<p class="text-blue-700 mb-2">This tool only works with SVG files. If you have a PNG or other image format:</p>
+		<ol class="list-decimal list-inside text-blue-700 ml-2">
+			<li>Convert your image to SVG using a converter like <a href="https://www.freeconvert.com/png-to-svg" class="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">FreeConvert's PNG to SVG tool</a></li>
+			<li>Select how many unique colors there is in your art</li>
+			<li>Upload the converted SVG file below</li>
+			<li>Choose your desired colors!</li>
+		</ol>
+	</div>
+
 	<div class="mb-12 space-y-6 bg-white p-6 rounded-lg shadow-sm">
 		<div>
+			<h2 class="text-lg font-semibold mb-4 text-gray-700">Set Expected Colors</h2>
+			<div class="flex items-center gap-4">
+				<div class="w-64">
+					<label class="block text-sm font-medium text-gray-700 mb-1">
+						Number of Colors in SVG:
+					</label>
+					<input
+						type="number"
+						bind:value={expectedColorCount}
+						min="1"
+						max={colors.length}
+						class="block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+					/>
+				</div>
+				{#if !isValidColorCount}
+					<p class="text-red-500 text-sm">
+						Please enter a number between 1 and {colors.length}
+					</p>
+				{/if}
+			</div>
+		</div>
+
+		<div class="border-t pt-6">
 			<h2 class="text-lg font-semibold mb-4 text-gray-700">Upload SVG Template</h2>
 			<input
 				type="file"
 				accept=".svg"
 				on:change={handleFileUpload}
 				class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+				disabled={!isValidColorCount}
 			/>
-			{#if uploadedSvg}
-				<div class="mt-4">
-					<label class="block text-sm font-medium text-gray-700">Expected Number of Colors:</label>
-					<input
-						type="number"
-						bind:value={expectedColorCount}
-						min="1"
-						max={colors.length}
-						class="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-					/>
-				</div>
+			{#if !isValidColorCount}
+				<p class="mt-2 text-sm text-amber-600">
+					Please set the number of expected colors before uploading
+				</p>
 			{/if}
 		</div>
 
@@ -247,17 +277,23 @@
 	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 		{#each combinations as combo}
 			<div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
-				<div class="aspect-square rounded-lg overflow-hidden">
-					<img
-						src={getSvgUrl(combo)}
-						alt="Color combination pattern"
-						class="w-full h-full object-cover"
-					/>
+				<div class="aspect-square rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+					{#if uploadedSvg === null}
+						<p class="text-gray-400">Input SVG to start</p>
+					{:else if combinations.length === 0}
+						<p class="text-gray-400">Loading...</p>
+					{:else}
+						<img
+							src={getSvgUrl(combo)}
+							alt="Color combination pattern"
+							class="w-full h-full object-cover"
+						/>
+					{/if}
 				</div>
-				<div class="flex gap-3 mt-4 px-2">
+				<div class="flex gap-3 mt-4 px-2 flex-wrap">
 					{#each combo as color}
-						<div class="flex-1 text-center py-2 px-3 bg-gray-50 rounded text-sm font-mono text-gray-600 flex items-center gap-2">
-							<div class="w-4 h-4 rounded-full" style="background-color: {color}" />
+						<div class="flex-shrink-0 text-center py-1 px-2 bg-gray-50 rounded text-xs font-mono text-gray-600 flex items-center gap-1">
+							<div class="w-3 h-3 rounded-full" style="background-color: {color}" />
 							{color}
 						</div>
 					{/each}
